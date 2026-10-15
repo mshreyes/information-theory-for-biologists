@@ -1,0 +1,774 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Information Theory for Biologists</title>
+<style>
+:root{
+  --bg:#f3f7f8;--surface:#ffffff;--ink:#132429;--mute:#526970;--line:#d0dfe3;
+  --accent:#0d6e7a;--accent-ink:#ffffff;--accent-soft:#e5f3f5;
+  --amber:#b8621b;--code:#0d1b1e;--code-ink:#d9f5f8;
+  --ok:#14794a;--bad:#b53225;--box-bg:#eaf2f4;
+  box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --bg:#0a1417;--surface:#122126;--ink:#e3eff2;--mute:#8aa4ac;--line:#233b42;
+    --accent:#38b2c2;--accent-ink:#081619;--accent-soft:#172f36;
+    --amber:#f0944d;--code:#060c0e;--code-ink:#ccf2f7;
+    --ok:#4ed38f;--bad:#ff7869;--box-bg:#162930
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0a1417;--surface:#122126;--ink:#e3eff2;--mute:#8aa4ac;--line:#233b42;
+  --accent:#38b2c2;--accent-ink:#081619;--accent-soft:#172f36;
+  --amber:#f0944d;--code:#060c0e;--code-ink:#ccf2f7;
+  --ok:#4ed38f;--bad:#ff7869;--box-bg:#162930
+}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.65 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
+h1,h2,h3,h4,button,nav,.tag,.meta,label{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}
+header{padding:32px 20px 12px;max-width:1100px;margin:0 auto}
+h1{font-size:clamp(1.8rem,4vw,2.5rem);line-height:1.2;margin:0 0 10px;color:var(--ink);font-weight:800}
+header p{max-width:74ch;color:var(--mute);margin:0 0 16px;font-size:1.04rem}
+.bar{height:8px;background:var(--line);border-radius:4px;overflow:hidden;max-width:480px}
+.bar i{display:block;height:100%;width:0;background:var(--accent);transition:width .3s}
+.meta{font-size:.85rem;color:var(--mute);margin-top:8px}
+.wrap{display:grid;grid-template-columns:270px 1fr;gap:28px;max-width:1100px;margin:0 auto;padding:20px 20px 80px}
+nav{position:sticky;top:calc(16px + env(safe-area-inset-top,0px));align-self:start;display:flex;flex-direction:column;gap:5px}
+nav button{text-align:left;background:none;border:1px solid transparent;color:var(--ink);padding:9px 12px;border-radius:6px;cursor:pointer;font-size:.9rem;line-height:1.3}
+nav button:hover{border-color:var(--line);background:var(--surface)}
+nav button[aria-current="true"]{background:var(--surface);border-color:var(--accent);font-weight:700;color:var(--accent)}
+nav button.done::after{content:" ✓";color:var(--ok)}
+main{min-width:0}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:24px;margin-bottom:20px;box-shadow:0 1px 3px rgba(0,0,0,0.02)}
+h2{margin:0 0 6px;font-size:1.55rem;color:var(--ink)}
+h3{margin:18px 0 10px;font-size:1.15rem;color:var(--ink);border-bottom:1px solid var(--line);padding-bottom:6px}
+h3:first-of-type{margin-top:0}
+.goal{color:var(--amber);font-weight:600;margin:0 0 14px}
+ul{padding-left:22px;margin:6px 0 14px}
+li{margin-bottom:7px}
+pre{background:var(--code);color:var(--code-ink);padding:16px;border-radius:8px;overflow-x:auto;font:13.5px/1.55 ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;margin:8px 0 14px}
+code{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;font-size:.9em}
+.lang{font:700 .8rem system-ui,sans-serif;color:var(--amber);letter-spacing:0.04em;text-transform:uppercase}
+.formula-box{background:var(--box-bg);border-left:4px solid var(--accent);padding:15px 18px;border-radius:0 8px 8px 0;margin:12px 0 16px;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:.98rem;line-height:1.7}
+.example-box{background:var(--accent-soft);border:1px solid var(--line);border-radius:8px;padding:16px 18px;margin:12px 0}
+.example-title{font-weight:700;color:var(--accent);margin-bottom:6px;font-size:1rem}
+.paper-item{padding:14px 0;border-top:1px solid var(--line)}
+.paper-item:first-of-type{border-top:none}
+.paper-title{font-size:1.02rem;font-weight:700;color:var(--accent);margin-bottom:4px}
+.paper-title a{color:inherit;text-decoration:none}
+.paper-title a:hover{text-decoration:underline}
+.paper-authors{font-size:.88rem;color:var(--mute);margin-bottom:6px}
+.paper-desc{font-size:.93rem;margin:0}
+.filters{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px}
+.filters button,.btn{border:1px solid var(--line);background:var(--surface);color:var(--ink);padding:6px 13px;border-radius:999px;cursor:pointer;font-size:.85rem;font-weight:500}
+.filters button[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.btn.primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent);border-radius:6px;padding:9px 16px;font-weight:600}
+.res{display:flex;gap:12px;padding:11px 0;border-top:1px solid var(--line);align-items:baseline}
+.res:first-of-type{border-top:0}
+.tag{flex:none;font-size:.75rem;font-weight:600;border:1px solid var(--line);border-radius:4px;padding:2px 7px;color:var(--amber);min-width:74px;text-align:center}
+.res a{color:var(--accent);font-weight:600;text-decoration:none}
+.res a:hover{text-decoration:underline}
+.res span.n{color:var(--mute);font-size:.9rem}
+.q{margin:16px 0;padding-bottom:14px;border-bottom:1px solid var(--line)}
+.q:last-child{border-bottom:none;padding-bottom:0}
+.q p{margin:0 0 8px;font-weight:600}
+.opt{display:block;width:100%;text-align:left;margin:6px 0;padding:10px 14px;border:1px solid var(--line);background:var(--bg);color:var(--ink);border-radius:6px;cursor:pointer;font:inherit;transition:background .2s}
+.opt:hover{border-color:var(--accent)}
+.opt.ok{border-color:var(--ok);background:color-mix(in srgb,var(--ok) 18%,var(--surface));font-weight:600}
+.opt.bad{border-color:var(--bad);background:color-mix(in srgb,var(--bad) 18%,var(--surface))}
+.why{font-size:.92rem;color:var(--mute);margin-top:6px}
+.row{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;align-items:center}
+button:focus-visible,a:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+@media(max-width:820px){.wrap{grid-template-columns:1fr}nav{position:static;flex-direction:row;flex-wrap:wrap}}
+</style>
+</head>
+<body>
+<header>
+<h1>Information Theory for Biologists</h1>
+<p>A free, self-paced curriculum exploring how living systems encode, transmit, and process information across molecular, cellular, neural, and evolutionary scales. From transcription factor sequence logos and protein coevolution to single-cell gene regulatory networks and biophysical channel capacity, each module provides native HTML mathematical formulations, step-by-step worked biological examples, verified landmark papers, and Python/R implementations.</p>
+<div class="bar" aria-hidden="true"><i id="pb"></i></div>
+<div class="meta" id="pt"></div>
+</header>
+<div class="wrap">
+<nav id="nav" aria-label="Course Modules"></nav>
+<main id="mod"></main>
+</div>
+
+<script>
+var M = [
+{
+  t: "Foundations: Surprise, Shannon Entropy & Biological Uncertainty",
+  time: "1 week",
+  goal: "Quantify uncertainty across biological states using Shannon entropy, joint entropy, and conditional entropy.",
+  math: "<b>1. Self-Information (Surprisal) of event x:</b><br>" +
+        "I(x) = &minus;log<sub>2</sub> P(x) &nbsp;[measured in bits; 1 nat = log<sub>2</sub>(e) &approx; 1.443 bits]<br><br>" +
+        "<b>2. Shannon Entropy of discrete random variable X:</b><br>" +
+        "H(X) = &minus;&sum;<sub>x&isin;&Chi;</sub> P(x) log<sub>2</sub> P(x) &nbsp;(by continuity, 0 log<sub>2</sub> 0 = 0)<br>" +
+        "Bounds: 0 &le; H(X) &le; log<sub>2</sub>(|&Chi;|), achieving maximum for a uniform distribution.<br><br>" +
+        "<b>3. Joint &amp; Conditional Entropy (Chain Rule):</b><br>" +
+        "H(X, Y) = H(X) + H(Y | X), &nbsp;where H(Y | X) = &minus;&sum;<sub>x,y</sub> P(x, y) log<sub>2</sub> P(y | x)",
+  learn: [
+    "Claude Shannon (1948) established that information is the statistical resolution of uncertainty, independent of semantic meaning—a framework directly applicable to nucleotide polymer sequences, spike trains, and cellular states.",
+    "For an alphabet of size M, the maximum possible entropy is log<sub>2</sub>(M): for DNA/RNA (M = 4), H<sub>max</sub> = log<sub>2</sub>(4) = 2 bits per base; for the 20 standard amino acids (M = 20), H<sub>max</sub> = log<sub>2</sub>(20) &approx; 4.322 bits per residue.",
+    "Conditioning never increases entropy on average: H(Y | X) &le; H(Y), with equality if and only if X and Y are statistically independent.",
+    "In ecology and microbiome science, the Shannon-Wiener diversity index is simply Shannon entropy calculated in nats (natural log) over operational taxonomic unit (OTU) or species relative abundances; its exponential exp(H) yields the effective number of species (Hill number q = 1)."
+  ],
+  example: {
+    title: "Worked Biological Example: Nucleotide Bias in an Extremophile Genome vs. Random DNA",
+    body: "Consider a random DNA genome where P(A) = P(C) = P(G) = P(T) = 0.25:<br>" +
+          "<code>H(DNA<sub>random</sub>) = &minus;4 &times; (0.25 &times; log<sub>2</sub>(0.25)) = &minus;4 &times; (0.25 &times; &minus;2) = 2.000 bits/base</code>.<br><br>" +
+          "Now consider an AT-rich genome (such as <i>Plasmodium falciparum</i>, ~80% AT) where P(A) = P(T) = 0.40 and P(C) = P(G) = 0.10:<br>" +
+          "<code>H(DNA<sub>AT-rich</sub>) = &minus;2 &times; (0.40 log<sub>2</sub> 0.40) &minus; 2 &times; (0.10 log<sub>2</sub> 0.10) = &minus;2(&minus;0.5288) &minus; 2(&minus;0.3322) = 1.722 bits/base</code>.<br>" +
+          "Compositional bias reduces the per-base entropy by 0.278 bits, lowering the theoretical sequence complexity and increasing background motif occurrence rates."
+  },
+  app: "Measuring sequence conservation across viral quasispecies (e.g., HIV env hypervariable loops), quantifying TCR/BCR immune repertoire diversity, and assessing gut microbiome alpha-diversity.",
+  py: "# Computing Shannon Entropy (in bits) and Hill Number from sequence/species counts\nimport numpy as np\nfrom collections import Counter\n\ndef shannon_entropy_bits(seq):\n    counts = Counter(seq)\n    n = len(seq)\n    probs = np.array([c / n for c in counts.values()])\n    return -np.sum(probs * np.log2(probs))\n\ndna_random = 'ACGT' * 250\ndna_biased = 'AAAA' * 200 + 'TTTT' * 200 + 'C' * 100 + 'G' * 100\nprint(f'Uniform DNA Entropy: {shannon_entropy_bits(dna_random):.3f} bits')\nprint(f'Biased DNA Entropy:  {shannon_entropy_bits(dna_biased):.3f} bits')",
+  r: "# Computing Shannon Entropy and Effective Species Number in R\nshannon_bits <- function(counts) {\n  p <- counts[counts > 0] / sum(counts)\n  -sum(p * log2(p))\n}\n\n# Example: Microbiome OTU read counts\notu_counts <- c(400, 400, 100, 100)\nh_bits <- shannon_bits(otu_counts)\neffective_species <- 2^h_bits\ncat(sprintf('Entropy: %.3f bits | Effective Species (2^H): %.2f\\n', h_bits, effective_species))",
+  papers: [
+    {
+      title: "A Mathematical Theory of Communication",
+      authors: "Claude E. Shannon (1948)",
+      venue: "Bell System Technical Journal, 27(3), 379-423 & 27(4), 623-656",
+      link: "https://doi.org/10.1002/j.1538-7305.1948.tb01338.x",
+      desc: "The foundational paper of information theory, proving that all information sources and noisy communication channels can be characterized rigorously using entropy (H) and channel capacity (C) in bits."
+    },
+    {
+      title: "Entropy and Diversity",
+      authors: "Lou Jost (2006)",
+      venue: "Oikos, 113(2), 363-375",
+      link: "https://doi.org/10.1111/j.2006.0030-1299.14714.x",
+      desc: "Demonstrates why raw Shannon entropy is a measure of uncertainty rather than true biological diversity, and shows that exponentiating entropy yields the mathematically consistent 'effective number of species'."
+    }
+  ],
+  res: [
+    ["Book", "Elements of Information Theory (Cover & Thomas)", "https://doi.org/10.1002/047174882X", "The standard mathematical textbook on information theory"],
+    ["Book", "Biophysics: Searching for Principles (William Bialek)", "https://press.princeton.edu/books/hardcover/9780691138916/biophysics", "Masterpiece connecting statistical mechanics, information theory, and living systems"],
+    ["Docs", "SciPy Stats Entropy Documentation", "https://docs.scipy.org/doc/scipy/reference/generated/scipy.stats.entropy.html", "Python reference for Shannon entropy and KL divergence"]
+  ],
+  quiz: [
+    ["What is the maximum possible Shannon entropy per position for an alignment of standard 20-letter amino acid sequences?", ["2.00 bits", "4.32 bits (log2 of 20)", "20.00 bits"], 1, "When all 20 amino acids occur with equal probability (1/20 = 0.05), H = log2(20) \u2248 4.322 bits."],
+    ["If two biological variables X and Y are completely statistically independent, what is the conditional entropy H(Y | X)?", ["0 bits", "H(Y)", "H(X) + H(Y)"], 1, "When X and Y are independent, knowing X provides zero reduction in uncertainty about Y, so H(Y | X) = H(Y)."],
+    ["Why do ecologists take 2^(H_bits) or exp(H_nats) when comparing microbial community diversity?", ["To make the number smaller", "To convert log-scale uncertainty into the 'effective number of equally abundant species' (Hill number), which obeys the replication principle", "Because Shannon entropy can be negative for discrete counts"], 1, "Raw Shannon entropy is nonlinear with respect to pooling two equally diverse, non-overlapping communities; 2^(H_bits) scales linearly with species count."]
+  ]
+},
+{
+  t: "Genomic Motifs, Sequence Logos & Relative Entropy",
+  time: "1 to 2 weeks",
+  goal: "Construct Position Weight Matrices (PWMs), calculate sequence information content (R_sequence), and connect Kullback-Leibler divergence to transcription factor binding free energy.",
+  math: "<b>1. Kullback-Leibler Divergence (Relative Entropy):</b><br>" +
+        "D<sub>KL</sub>(P || Q) = &sum;<sub>x&isin;{A,C,G,T}</sub> P(x) log<sub>2</sub> [ P(x) / Q(x) ] &ge; 0<br><br>" +
+        "<b>2. Schneider-Stephens Sequence Logo Information Content at position i:</b><br>" +
+        "R<sub>seq</sub>(i) = H<sub>max</sub> &minus; [ H<sub>obs</sub>(i) + e(n) ] = 2 &minus; [ &minus;&sum;<sub>b&isin;{A,C,G,T}</sub> f(b, i) log<sub>2</sub> f(b, i) + e(n) ] &nbsp;(bits)<br>" +
+        "Height of base b at position i: &nbsp;Height(b, i) = f(b, i) &times; R<sub>seq</sub>(i)<br><br>" +
+        "<b>3. Stormo Position Weight Matrix (PWM) Log-Odds Score:</b><br>" +
+        "W(b, i) = log<sub>2</sub> [ f(b, i) / p<sub>bg</sub>(b) ], &nbsp;where average score over bound sites is &sum;<sub>i</sub> D<sub>KL</sub>(f<sub>i</sub> || p<sub>bg</sub>)",
+  learn: [
+    "Thomas Schneider and Michael Stephens (1990) invented Sequence Logos to replace qualitative consensus sequences, scaling total stack height at position i by its information content R<sub>seq</sub>(i) in bits.",
+    "When correcting for a non-uniform genomic background Q = p<sub>bg</sub>, the information at position i is given by the Kullback-Leibler divergence D<sub>KL</sub>(f<sub>i</sub> || p<sub>bg</sub>), which is always non-negative (Gibbs' inequality).",
+    "Small-sample correction e(n): Finite alignments of n sequences underestimate true entropy; adding pseudocounts (Laplace/Dirichlet priors) or subtracting the Basharin/Miller-Madow correction prevents spurious inflation of bits.",
+    "Biophysical link (Berg & von Hippel 1987; Stormo 2000): Under thermodynamic equilibrium at low protein concentration, the PWM log-odds score W(b, i) is directly proportional to the specific binding free energy contribution &Delta;&Delta;G<sub>i</sub>(b) in units of k<sub>B</sub>T."
+  ],
+  example: {
+    title: "Worked Biological Example: Calculating Stack Height in a Transcription Factor Binding Motif",
+    body: "Suppose we align 100 bound promoter sites for a bacterial transcription factor. At position 4 of the motif, we observe 85 Adenines (f<sub>A</sub> = 0.85), 5 Cytosines (f<sub>C</sub> = 0.05), 5 Guanines (f<sub>G</sub> = 0.05), and 5 Thymines (f<sub>T</sub> = 0.05) in a 50% GC genome:<br>" +
+          "1. Observed positional uncertainty:<br>" +
+          "<code>H<sub>obs</sub>(4) = &minus;[0.85 log<sub>2</sub>(0.85) + 3 &times; 0.05 log<sub>2</sub>(0.05)] = &minus;[&minus;0.199 + 3(&minus;0.216)] = 0.847 bits</code>.<br>" +
+          "2. Information content at position 4 (ignoring small-sample error for n=100):<br>" +
+          "<code>R<sub>seq</sub>(4) = 2.000 &minus; 0.847 = 1.153 bits</code>.<br>" +
+          "3. Individual letter heights in the sequence logo at position 4:<br>" +
+          "<code>Height(A) = 0.85 &times; 1.153 = 0.980 bits</code>; &nbsp;<code>Height(C, G, T) = 0.05 &times; 1.153 = 0.058 bits each</code>.<br>" +
+          "Summing across all positions of a motif yields R<sub>sequence</sub>: for a typical factor that must locate a unique site in an <i>E. coli</i> genome (~4.6 &times; 10<sup>6</sup> bp), R<sub>frequency</sub> = log<sub>2</sub>(4.6 &times; 10<sup>6</sup>) &approx; 22.1 bits."
+  },
+  app: "Discovering transcription factor binding sites (ChIP-seq / SELEX), scoring splice donor/acceptor junctions, and predicting off-target CRISPR guide RNA binding.",
+  py: "# Building a Position Weight Matrix (PWM) and Sequence Logo Heights in Python\nimport numpy as np\n\n# Alignment of 6 sequences (length 4)\nseqs = ['TATA', 'TATA', 'TAAA', 'TATA', 'TAGA', 'TATA']\nbases = ['A', 'C', 'G', 'T']\nn, L = len(seqs), len(seqs[0])\n\n# Frequency matrix with 0.25 pseudocount total (Laplace smoothing)\nfreq = np.zeros((4, L))\nfor i in range(L):\n    col = [s[i] for s in seqs]\n    for b_idx, b in enumerate(bases):\n        freq[b_idx, i] = (col.count(b) + 0.25) / (n + 1.0)\n\n# Entropy and Information Content per position\nH_pos = -np.sum(freq * np.log2(freq), axis=0)\nR_seq = 2.0 - H_pos\npwm_log_odds = np.log2(freq / 0.25)\nprint('Information content per position (bits):', np.round(R_seq, 3))\nprint('Total Motif Information R_sequence:', round(np.sum(R_seq), 3), 'bits')",
+  r: "# Calculating PWM and KL-divergence information content in R\nbases <- c('A', 'C', 'G', 'T')\n# Counts at a single binding site position across 50 ChIP-seq peaks\ncounts <- c(A = 42, C = 2, G = 4, T = 2)\np_obs <- (counts + 0.25) / sum(counts + 0.25)\np_bg  <- c(A = 0.30, C = 0.20, G = 0.20, T = 0.30) # AT-biased background\n\nkl_bits <- sum(p_obs * log2(p_obs / p_bg))\npwm_col <- log2(p_obs / p_bg)\ncat(sprintf('Position Information (D_KL): %.3f bits\\n', kl_bits))\nprint(round(pwm_col, 2))",
+  papers: [
+    {
+      title: "Sequence Logos: A New Way to Display Consensus Sequences",
+      authors: "Thomas D. Schneider, R. Michael Stephens (1990)",
+      venue: "Nucleic Acids Research, 18(20), 6097-6100",
+      link: "https://doi.org/10.1093/nar/18.20.6097",
+      desc: "Introduced the sequence logo graphical representation, scaling residue heights by Shannon information conservation R_seq(i) to visualize both binding specificity and base preference."
+    },
+    {
+      title: "Use of the 'Perceptron' Algorithm to Distinguish Translational Initiation Sites in E. coli",
+      authors: "Gary D. Stormo, Thomas D. Schneider, Larry Gold, Andrzej Ehrenfeucht (1982)",
+      venue: "Nucleic Acids Research, 10(9), 2997-3011",
+      link: "https://doi.org/10.1093/nar/10.9.2997",
+      desc: "Pioneered the additive Position Weight Matrix (PWM) representation for biological sequences, demonstrating its superiority over deterministic consensus strings."
+    },
+    {
+      title: "Selection of DNA Binding Sites by Regulatory Proteins: Statistical-Mechanical Theory and Application to Operators and Promoters",
+      authors: "Otto G. Berg, Peter H. von Hippel (1987)",
+      venue: "Journal of Molecular Biology, 193(4), 723-743",
+      link: "https://doi.org/10.1016/0022-2836(87)90354-8",
+      desc: "Established the physical derivation showing how evolutionary selection for binding free energy produces Boltzmann nucleotide distributions equivalent to log-odds information scores."
+    }
+  ],
+  res: [
+    ["Tool", "WebLogo 3: Create Sequence Logos", "https://weblogo.threeplusone.com/", "Standard web server and Python package for generating sequence logos"],
+    ["Database", "JASPAR Transcription Factor Binding Profiles", "https://jaspar.elixir.no/", "Open-access database of curated eukaryotic PWMs and sequence logos"],
+    ["Package", "ggseqlogo (R / Bioconductor)", "https://omarwagih.github.io/ggseqlogo/", "Publication-ready sequence logos in R using ggplot2"]
+  ],
+  quiz: [
+    ["In a standard DNA sequence logo, if a position is 100% conserved as Guanine across a very large alignment, what is the height of the 'G' letter?", ["1.0 bit", "2.0 bits", "4.0 bits"], 1, "For DNA, H_max = log2(4) = 2 bits. When P(G) = 1, H_obs = 0, so R_seq = 2 - 0 = 2.0 bits."],
+    ["Why can Kullback-Leibler divergence D_KL(P || Q) exceed 2.0 bits at a single DNA position when the genome background Q is strongly biased?", ["Because D_KL is buggy", "Because if a motif strictly requires a rare base (e.g. G where P_bg(G) = 0.05), log2(1 / 0.05) = 4.32 bits of surprise is achieved", "Because DNA has 6 bases"], 1, "While Shannon entropy reduction against a uniform background is bounded by 2 bits, relative entropy D_KL(P || Q) against a rare background base can exceed 2 bits."],
+    ["What does a negative log-odds score W(b, i) = log2(f(b,i) / p_bg(b)) indicate in a Position Weight Matrix?", ["Base b is enriched at position i relative to genomic background", "Base b is depleted (disfavored) at position i relative to genomic background, imposing an energetic penalty", "The calculation overflowed"], 1, "When f(b,i) < p_bg(b), the ratio is < 1 and its log2 is negative, meaning base b reduces binding affinity relative to background."]
+  ]
+},
+{
+  t: "Mutual Information & Gene Regulatory Network Inference",
+  time: "2 weeks",
+  goal: "Measure nonlinear statistical dependencies using Mutual Information (MI), apply the Data Processing Inequality (DPI), and reconstruct transcriptomic networks.",
+  math: "<b>1. Mutual Information I(X; Y):</b><br>" +
+        "I(X; Y) = &sum;<sub>x,y</sub> P(x, y) log<sub>2</sub> [ P(x, y) / (P(x)P(y)) ] = D<sub>KL</sub>( P(X,Y) || P(X)P(Y) )<br>" +
+        "Equivalent identities: &nbsp;I(X; Y) = H(X) &minus; H(X | Y) = H(Y) &minus; H(Y | X) = H(X) + H(Y) &minus; H(X, Y)<br><br>" +
+        "<b>2. Data Processing Inequality (DPI):</b><br>" +
+        "If X &rarr; Y &rarr; Z forms a Markov chain (P(Z | X, Y) = P(Z | Y)), then:<br>" +
+        "I(X; Z) &le; min[ I(X; Y), I(Y; Z) ]<br><br>" +
+        "<b>3. Partial Information Decomposition (PID) for 2 Sources (X<sub>1</sub>, X<sub>2</sub>) &rarr; Target Y:</b><br>" +
+        "I(Y; X<sub>1</sub>, X<sub>2</sub>) = Unique(X<sub>1</sub>) + Unique(X<sub>2</sub>) + Redundancy(X<sub>1</sub>, X<sub>2</sub>) + Synergy(X<sub>1</sub>, X<sub>2</sub>)",
+  learn: [
+    "Unlike Pearson correlation (which only detects linear relationships) or Spearman correlation (which only detects monotonic relationships), Mutual Information I(X; Y) &ge; 0 captures arbitrary non-monotonic, oscillatory, or combinatorial relationships and equals zero if and only if X and Y are strictly independent.",
+    "For continuous biological variables (e.g., normalized gene expression or single-cell RNA-seq counts), naive histogram binning introduces severe bias; modern methods use adaptive partitioning, B-spline kernel density estimation, or k-Nearest Neighbor (KSG) estimators (Kraskov et al. 2004).",
+    "ARACNE (Algorithm for the Reconstruction of Accurate Cellular Networks; Margolin et al. 2006) computes pairwise MI across all gene pairs and applies the Data Processing Inequality (DPI) to every gene triplet (G<sub>1</sub>, G<sub>2</sub>, G<sub>3</sub>), pruning the weakest edge to eliminate indirect cascades.",
+    "In single-cell transcriptomics, combinatorial gene regulation (e.g., an AND-gate enhancer requiring two transcription factors simultaneously) produces synergistic information that pairwise MI misses; PIDC (Chan et al. 2017) uses multivariate Partial Information Decomposition to capture unique and synergistic regulatory interactions."
+  ],
+  example: {
+    title: "Worked Biological Example: Pruning an Indirect Transcriptional Cascade via the Data Processing Inequality",
+    body: "Suppose Transcription Factor <b>G<sub>1</sub></b> activates Transcription Factor <b>G<sub>2</sub></b>, which in turn activates metabolic enzyme <b>G<sub>3</sub></b> (G<sub>1</sub> &rarr; G<sub>2</sub> &rarr; G<sub>3</sub>), with no direct physical binding of G<sub>1</sub> to the G<sub>3</sub> promoter.<br>" +
+          "Across 500 RNA-seq samples, we measure pairwise Mutual Information:<br>" +
+          "&bull; <code>I(G<sub>1</sub>; G<sub>2</sub>) = 0.82 bits</code><br>" +
+          "&bull; <code>I(G<sub>2</sub>; G<sub>3</sub>) = 0.74 bits</code><br>" +
+          "&bull; <code>I(G<sub>1</sub>; G<sub>3</sub>) = 0.51 bits</code><br><br>" +
+          "A naive thresholding method at MI &gt; 0.40 would draw a false feed-forward triangle connecting G<sub>1</sub> directly to G<sub>3</sub>. Inspecting the triplet (G<sub>1</sub>, G<sub>2</sub>, G<sub>3</sub>), ARACNE identifies that <code>I(G<sub>1</sub>; G<sub>3</sub>) = 0.51 &le; min(0.82, 0.74)</code> and removes the (G<sub>1</sub>, G<sub>3</sub>) edge as an indirect correlation mediated through G<sub>2</sub>."
+  },
+  app: "Reconstructing master regulator networks in oncology (e.g., human B-cell lymphomas), inferring lineage decision networks from single-cell RNA-seq, and identifying synthetic lethal gene pairs.",
+  py: "# Mutual Information vs Pearson Correlation & ARACNE DPI Pruning in Python\nimport numpy as np\nfrom sklearn.feature_selection import mutual_info_regression\n\nnp.random.seed(42)\n# Non-monotonic regulatory relationship (biphasic / incoherent feed-forward)\ntf = np.random.uniform(-2, 2, 500)\ntarget = -(tf**2) + np.random.normal(0, 0.2, 500)\n\npearson_r = np.corrcoef(tf, target)[0, 1]\nmi_nats = mutual_info_regression(tf.reshape(-1, 1), target, random_state=42)[0]\nmi_bits = mi_nats / np.log(2)\nprint(f'Pearson r: {pearson_r:.3f} (misses quadratic regulation!)')\nprint(f'KSG Mutual Information: {mi_bits:.3f} bits (captures dependency!)')",
+  r: "# Gene Regulatory Network Inference using minet (ARACNE / CLR) in R\nlibrary(minet)\n# Simulate expression matrix: 200 samples, 5 genes\nset.seed(42)\ng1 <- rnorm(200)\ng2 <- 0.85 * g1 + rnorm(200, sd = 0.4)\ng3 <- 0.85 * g2 + rnorm(200, sd = 0.4) # Cascade G1 -> G2 -> G3\nmat <- cbind(G1 = g1, G2 = g2, G3 = g3)\n\n# Build Mutual Information matrix and apply ARACNE DPI pruning\nmi_mat <- build.mim(mat, estimator = 'mi.empirical', disc = 'equalfreq')\naracne_net <- aracne(mi_mat, eps = 0.05)\nprint(round(aracne_net, 3)) # Edge (G1, G3) is pruned to 0!",
+  papers: [
+    {
+      title: "ARACNE: An Algorithm for the Reconstruction of Gene Regulatory Networks in a Mammalian Cellular Context",
+      authors: "Adam A. Margolin, Ilya Nemenman, Katia Basso, Chris Wiggins, Gustavo Stolovitzky, Riccardo Dalla Favera, Andrea Califano (2006)",
+      venue: "BMC Bioinformatics, 7(Suppl 1), S7",
+      link: "https://doi.org/10.1186/1471-2105-7-S1-S7",
+      desc: "Introduced the combination of Gaussian kernel mutual information estimation with the Data Processing Inequality to distinguish direct transcriptional interactions from indirect cascades in mammalian cells."
+    },
+    {
+      title: "Reverse Engineering of Regulatory Networks in Human B Cells",
+      authors: "Katia Basso, Adam A. Margolin, Gustavo Stolovitzky, Ulf Klein, Riccardo Dalla-Favera, Andrea Califano (2005)",
+      venue: "Nature Genetics, 37(4), 382-390",
+      link: "https://doi.org/10.1038/ng1532",
+      desc: "Validated information-theoretic network inference experimentally in human B lymphocytes, identifying MYC as a major hub and discovering novel direct target genes."
+    },
+    {
+      title: "Gene Regulatory Network Inference from Single-Cell Data Using Multivariate Information Measures",
+      authors: "Thalia E. Chan, Michael P. H. Stumpf, Ann C. Babtie (2017)",
+      venue: "Cell Systems, 5(3), 251-267",
+      link: "https://doi.org/10.1016/j.cels.2017.08.014",
+      desc: "Developed the PIDC algorithm based on Partial Information Decomposition, decomposing triplet gene relationships into unique, redundant, and synergistic components in single-cell transcriptomics."
+    }
+  ],
+  res: [
+    ["Package", "minet: Mutual Information NETworks (Bioconductor)", "https://bioconductor.org/packages/release/bioc/html/minet.html", "R package implementing ARACNE, CLR, and MRNET network inference"],
+    ["Paper", "Estimating Mutual Information (Kraskov, Stögbauer, Grassberger 2004)", "https://doi.org/10.1103/PhysRevE.69.066138", "The k-nearest neighbor (KSG) continuous mutual information estimator"],
+    ["Tool", "PIDC / NetworkInference.jl", "https://github.com/Tchanders/NetworkInference.jl", "Fast Julia implementation of Partial Information Decomposition for single-cell data"]
+  ],
+  quiz: [
+    ["Why can Mutual Information detect a repressor-activator biphasic gene relationship where Pearson correlation is 0?", ["Because MI assumes a linear Gaussian model", "Because MI measures any departure from joint independence P(X,Y) = P(X)P(Y), regardless of whether the curve is linear or monotonic", "Because MI ignores negative expression values"], 1, "MI measures the KL divergence between the joint distribution P(X,Y) and the product of marginals P(X)P(Y), capturing arbitrary functional dependencies."],
+    ["How does ARACNE use the Data Processing Inequality (DPI) on a closed triangle of three correlated genes?", ["It removes all three edges", "It removes the edge with the lowest Mutual Information, provided it falls below the other two beyond a tolerance threshold", "It averages the three MI values"], 1, "By the DPI, information cannot increase along a Markov chain X -> Y -> Z, so the indirect link (X, Z) has the smallest MI in the triplet."],
+    ["In cooperative gene regulation where an enhancer fires ONLY when both TF_A AND TF_B are present, what multivariate information component dominates?", ["Redundancy", "Synergy", "Self-deprecation"], 1, "An AND-gate logic produces synergistic information: knowing both TFs simultaneously provides more information about the target than the sum of knowing each TF individually."]
+  ]
+},
+{
+  t: "Protein Coevolution, Maximum Entropy & Direct Coupling Analysis",
+  time: "2 weeks",
+  goal: "Disentangle direct 3D physical residue contacts from transitive evolutionary correlations in Multiple Sequence Alignments (MSAs) using Maximum Entropy Potts models.",
+  math: "<b>1. Pairwise Residue Mutual Information in an MSA (columns i, j):</b><br>" +
+        "MI<sub>ij</sub> = &sum;<sub>a,b&isin;{1..21}</sub> f<sub>ij</sub>(a, b) log<sub>2</sub> [ f<sub>ij</sub>(a, b) / (f<sub>i</sub>(a) f<sub>j</sub>(b)) ]<br><br>" +
+        "<b>2. Global Maximum Entropy (Potts) Distribution over sequence A = (a<sub>1</sub>, ..., a<sub>L</sub>):</b><br>" +
+        "P(a<sub>1</sub>, ..., a<sub>L</sub>) = (1 / Z) exp[ &sum;<sub>i&lt;j</sub> e<sub>ij</sub>(a<sub>i</sub>, a<sub>j</sub>) + &sum;<sub>i</sub> h<sub>i</sub>(a<sub>i</sub>) ]<br><br>" +
+        "<b>3. Direct Information (DI<sub>ij</sub>):</b><br>" +
+        "DI<sub>ij</sub> = &sum;<sub>a,b</sub> P<sup>(dir)</sup><sub>ij</sub>(a, b) log<sub>2</sub> [ P<sup>(dir)</sup><sub>ij</sub>(a, b) / (f<sub>i</sub>(a) f<sub>j</sub>(b)) ]",
+  learn: [
+    "Compensatory mutations preserve protein structure across evolution: if residue i mutates from positively to negatively charged, its 3D contact partner j often mutates to restore electrostatic complementarity.",
+    "Why raw Mutual Information fails for 3D contact prediction: MI is a local marginal metric. If residue i physically touches j, and j physically touches k, then i and k exhibit high transitive MI<sub>ik</sub> even when separated by >20 Å.",
+    "Following Edwin Jaynes' Maximum Entropy Principle (1957), Direct Coupling Analysis (DCA; Weigt et al. 2009, Morcos et al. 2011) fits a global statistical physics Potts model that reproduces all empirical single-site frequencies f<sub>i</sub>(a) and pairwise frequencies f<sub>ij</sub>(a,b) while maximizing sequence entropy.",
+    "By inverting the empirical covariance matrix (Mean-Field DCA) or optimizing pseudolikelihood (plmDCA), the direct coupling parameters e<sub>ij</sub>(a,b) isolate true physical 3D contacts (<8 Å), providing the foundational evolutionary signal that enabled modern deep-learning structure predictors (AlphaFold, RoseTTAFold, ESMFold)."
+  ],
+  example: {
+    title: "Worked Biological Example: Mean-Field Inversion of Transitive Couplings",
+    body: "Imagine three binary residue positions (i = 1, 2, 3) along a beta-sheet where 1 touches 2, and 2 touches 3, but 1 and 3 do not touch. Suppose the empirical pairwise correlation matrix across 5,000 homologous sequences is:<br>" +
+          "<code>C = [[1.0, 0.6, 0.36], [0.6, 1.0, 0.6], [0.36, 0.6, 1.0]]</code><br><br>" +
+          "&bull; <b>Raw correlation / MI</b> sees C<sub>13</sub> = 0.36 and falsely predicts a direct contact between residues 1 and 3.<br>" +
+          "&bull; <b>Mean-Field DCA</b> computes the negative inverse of the covariance matrix (J = &minus;C<sup>&minus;1</sup>):<br>" +
+          "<code>C<sup>&minus;1</sup> = [[1.5625, &minus;0.9375, 0.0000], [&minus;0.9375, 2.1250, &minus;0.9375], [0.0000, &minus;0.9375, 1.5625]]</code>.<br>" +
+          "Notice that the (1, 3) entry in the inverse matrix is <b>exactly 0.0000</b>! Global inversion completely removes the transitive chain effect and isolates the two true physical contacts (1,2) and (2,3)."
+  },
+  app: "De novo 3D protein and RNA structure prediction, mapping protein-protein interaction interfaces (e.g., bacterial two-component histidine kinase / response regulator complexes), and predicting epistatic fitness landscapes for deep mutational scanning.",
+  py: "# Demonstrating Direct Coupling Inversion vs Marginal Correlation in Python\nimport numpy as np\n\n# True direct coupling matrix (precision matrix) for a 4-residue chain: 0-1-2-3\n# Only adjacent residues physically touch in 3D space\nLambda = np.array([\n    [ 1.5, -0.7,  0.0,  0.0],\n    [-0.7,  1.8, -0.7,  0.0],\n    [ 0.0, -0.7,  1.8, -0.7],\n    [ 0.0,  0.0, -0.7,  1.5]\n])\n\n# Observed marginal covariance matrix C = inv(Lambda)\nC = np.linalg.inv(Lambda)\nprint('Observed marginal covariance C_02 (non-contact):', round(C[0, 2], 4))\n\n# Mean-Field DCA recovers direct couplings via -inv(C)\nJ_dca = -np.linalg.inv(C)\nprint('Recovered direct coupling J_02 (non-contact):   ', round(J_dca[0, 2], 4))\nprint('Recovered direct coupling J_01 (true contact):  ', round(J_dca[0, 1], 4))",
+  r: "# Inverting an amino acid covariance matrix with shrinkage (glasso/corpcor style) in R\nLambda <- matrix(c(\n   1.5, -0.7,  0.0,\n  -0.7,  1.8, -0.7,\n   0.0, -0.7,  1.5\n), nrow = 3, byrow = TRUE)\n\nC_obs <- solve(Lambda) # Marginal correlations show C[1,3] > 0\nJ_direct <- -solve(C_obs)\ncat('Marginal Correlation (1,3):', round(C_obs[1,3], 3), '\\n')\ncat('Direct Coupling (1,3):     ', round(J_direct[1,3], 3), '\\n')",
+  papers: [
+    {
+      title: "Identification of Direct Residue Contacts in Protein-Protein Interaction by Message Passing",
+      authors: "Martin Weigt, Robert A. White, Hendrik Szurmant, James A. Hoch, Terence Hwa (2009)",
+      venue: "Proceedings of the National Academy of Sciences (PNAS), 106(1), 67-72",
+      link: "https://doi.org/10.1073/pnas.0805923106",
+      desc: "Introduced Direct Information (DI) via maximum-entropy Potts models to disentangle direct physical contacts from indirect correlations across bacterial SK/RR signaling interfaces."
+    },
+    {
+      title: "Direct-Coupling Analysis of Residue Coevolution Captures Native Contacts Across Many Protein Families",
+      authors: "Faruck Morcos, Andrea Pagnani, Bryan Lunt, Arianna Bertolino, Debora S. Marks, Chris Sander, Riccardo Zecchina, José N. Onuchic, Terence Hwa, Martin Weigt (2011)",
+      venue: "Proceedings of the National Academy of Sciences (PNAS), 108(49), E1293-E1301",
+      link: "https://doi.org/10.1073/pnas.1111471108",
+      desc: "Formulated fast Mean-Field Direct Coupling Analysis (mfDCA) via covariance matrix inversion, making genome-scale 3D protein contact prediction computationally tractable."
+    },
+    {
+      title: "Weak Pairwise Correlations Imply Strongly Correlated Network States in a Neural Population",
+      authors: "Elad Schneidman, Michael J. Berry II, Ronen Segev, William Bialek (2006)",
+      venue: "Nature, 440(7087), 1007-1012",
+      link: "https://doi.org/10.1038/nature04701",
+      desc: "Landmark paper showing that a pairwise maximum-entropy Ising model captures over 90% of the multi-information in vertebrate retinal ganglion cell populations."
+    }
+  ],
+  res: [
+    ["Tool", "EVcouplings (Marks & Sander Lab)", "https://evcouplings.org/", "Evolutionary coupling server and Python framework for 3D structure and mutation epistatic scoring"],
+    ["Paper", "Information Theory and Statistical Mechanics (E. T. Jaynes 1957)", "https://doi.org/10.1103/PhysRev.106.620", "The foundational derivation of the Principle of Maximum Entropy"],
+    ["Package", "pydca: Python Direct Coupling Analysis", "https://github.com/KIT-MBS/pydca", "Open-source implementation of mean-field and pseudolikelihood DCA for proteins and RNAs"]
+  ],
+  quiz: [
+    ["Why does raw pairwise Mutual Information (MI) yield high false-positive rates when predicting 3D residue contacts in proteins?", ["Because amino acids only have 4 letters", "Because MI is a marginal metric that conflates direct physical contacts (i-j, j-k) with transitive indirect chains (i-k) and phylogenetic background", "Because MI is always negative"], 1, "MI measures marginal pairwise correlation without conditioning on the rest of the sequence, causing strong couplings to propagate transitively."],
+    ["What constraint does a Maximum Entropy Potts model enforce when parameterized for a protein family?", ["It forces all amino acids to have equal probability", "It maximizes the Shannon entropy of the full-length sequence distribution P(A) subject to matching all empirical single-site f_i(a) and pairwise f_ij(a,b) frequencies", "It minimizes the number of alpha-helices"], 1, "By Jaynes' Maximum Entropy Principle, matching first- and second-order marginals while assuming nothing else yields the Boltzmann/Potts Gibbs distribution."],
+    ["In Mean-Field DCA, how are the direct coupling parameters e_ij obtained from the regularized empirical covariance matrix C?", ["By squaring every element of C", "By taking the matrix inverse of C (e = -C^-1)", "By setting all off-diagonal elements to 1"], 1, "Under the small-coupling expansion (mean-field approximation), the matrix of direct couplings is given by the negative inverse of the empirical covariance matrix."]
+  ]
+},
+{
+  t: "Biochemical Signaling Networks as Noisy Channels",
+  time: "2 weeks",
+  goal: "Formulate cell signaling pathways and morphogen gradients as Shannon channels, compute Channel Capacity via the Blahut-Arimoto algorithm, and measure Positional Information in bits.",
+  math: "<b>1. Biochemical Channel Capacity C (Input ligand/TF S &rarr; Cellular response R):</b><br>" +
+        "C = max<sub>P(S)</sub> I(S; R) = max<sub>P(S)</sub> &int;&int; P(s) P(r | s) log<sub>2</sub> [ P(r | s) / P(r) ] ds dr<br><br>" +
+        "<b>2. Number of Perfectly Distinguishable Input States:</b><br>" +
+        "N<sub>states</sub> = 2<sup>C</sup> &nbsp;(e.g., C = 1 bit &rArr; 2 states [ON/OFF]; C = 2 bits &rArr; 4 graded states)<br><br>" +
+        "<b>3. Small-Noise Gaussian Channel Approximation:</b><br>" +
+        "When P(r | s) = &Nu;(r&#772;(s), &sigma;<sup>2</sup><sub>r</sub>(s)), optimal input distribution is P*(s) &propto; |dr&#772;/ds| / &sigma;<sub>r</sub>(s), giving:<br>" +
+        "C &approx; log<sub>2</sub> [ (1 / &radic;(2&pi;e)) &int; (|dr&#772;/ds| / &sigma;<sub>r</sub>(s)) ds ]<br><br>" +
+        "<b>4. Positional Information I(g; x) in Embryonic Morphogen Gradients:</b><br>" +
+        "I({g<sub>i</sub>}; x) = S[P(x)] &minus; &langle; S[P(x | {g<sub>i</sub>})] &rangle;",
+  learn: [
+    "Intrinsic biochemical noise (stochastic promoter bursting, finite receptor counts, Brownian diffusion) and extrinsic cell-to-cell variability map a single input concentration S to a broad conditional distribution P(R | S).",
+    "Channel capacity C = max<sub>P(S)</sub> I(S; R) measures the intrinsic fidelity of the biochemical pathway maximized over all possible physiological input distributions, typically computed numerically via the Blahut-Arimoto iterative algorithm.",
+    "Cheong, Rhee, Wang, Nemenman, and Levchenko (2011) measured the single-cell information capacity of the mammalian TNF-&alpha; &rarr; NF-&kappa;B signaling pathway and found C &approx; 0.92 bits for a single scalar readout—barely sufficient for a binary ON/OFF decision—due to an upstream receptor/kinase bottleneck.",
+    "In contrast, in early <i>Drosophila</i> embryonic development, Tkačik et al. (2008) and Dubuis et al. (2013) demonstrated that the Bicoid morphogen and the four downstream gap genes (<i>Hunchback, Krüppel, Giant, Knirps</i>) jointly transmit ~4.2 &pm; 0.05 bits of positional information I({g}; x), specifying each nucleus's anterior-posterior position with ~1% precision—enough to distinguish nearly every single row of cells."
+  ],
+  example: {
+    title: "Worked Biological Example: Interpreting Single-Cell Signaling Bits",
+    body: "Suppose single-cell flow cytometry measures phosphorylated ERK response (R) across 8 doses of Epidermal Growth Factor (S):<br>" +
+          "&bull; Case A: Scalar pERK level at t = 15 min yields <code>C = 0.95 bits</code> &rArr; <code>2<sup>0.95</sup> = 1.93 distinguishable states</code>. An individual cell can only reliably tell whether EGF is <i>present or absent</i>, not its fine concentration.<br>" +
+          "&bull; Case B: Recording the full time-series trajectory R = (r(t<sub>1</sub>), r(t<sub>2</sub>), ..., r(t<sub>k</sub>)) of nuclear translocation in live cells increases capacity to <code>C = 1.85 bits</code> &rArr; <code>2<sup>1.85</sup> = 3.61 distinguishable states</code>, showing that cells encode graded ligand identity in dynamical frequency/duration pulses rather than static snapshots."
+  },
+  app: "Quantifying drug dose-response fidelity in single-cell pharmacology, engineering high-precision synthetic biology gene circuits, and decoding embryonic patterning.",
+  py: "# Blahut-Arimoto Algorithm to Compute Biochemical Channel Capacity C in Python\nimport numpy as np\n\ndef blahut_arimoto(p_r_given_s, tol=1e-6, max_iter=500):\n    # p_r_given_s: shape (n_inputs, n_outputs), rows sum to 1\n    n_s, n_r = p_r_given_s.shape\n    p_s = np.ones(n_s) / n_s\n    for _ in range(max_iter):\n        p_r = p_s @ p_r_given_s\n        # Compute D_KL for each input row\n        with np.errstate(divide='ignore', invalid='ignore'):\n            ratio = np.where(p_r_given_s > 0, p_r_given_s / p_r, 1.0)\n            d_kl = np.sum(p_r_given_s * np.log2(ratio), axis=1)\n        c_weights = 2.0 ** d_kl\n        c_low = np.log2(np.sum(p_s * c_weights))\n        c_high = np.log2(np.max(c_weights))\n        if c_high - c_low < tol:\n            break\n        p_s = (p_s * c_weights) / np.sum(p_s * c_weights)\n    return c_low, p_s\n\n# Simulated noisy Hill-like signaling channel (4 ligand doses -> 4 response bins)\nchannel = np.array([\n    [0.75, 0.20, 0.04, 0.01],\n    [0.25, 0.50, 0.20, 0.05],\n    [0.05, 0.20, 0.50, 0.25],\n    [0.01, 0.04, 0.20, 0.75]\n])\ncapacity, opt_ps = blahut_arimoto(channel)\nprint(f'Signaling Channel Capacity: {capacity:.3f} bits ({2**capacity:.2f} distinguishable states)')",
+  r: "# Blahut-Arimoto Channel Capacity in R\nblahut_arimoto <- function(W, iter = 200) {\n  n_s <- nrow(W)\n  p_s <- rep(1 / n_s, n_s)\n  for (i in 1:iter) {\n    p_r <- as.vector(p_s %*% W)\n    ratio <- sweep(W, 2, p_r, '/')\n    ratio[W == 0] <- 1\n    d_kl <- rowSums(W * log2(ratio))\n    weights <- 2^d_kl\n    C <- log2(sum(p_s * weights))\n    p_s <- (p_s * weights) / sum(p_s * weights)\n  }\n  list(capacity_bits = C, optimal_input = p_s)\n}\n\nW <- rbind(c(0.8, 0.2), c(0.2, 0.8)) # Binary symmetric channel with 20% error\nres <- blahut_arimoto(W)\ncat(sprintf('Capacity: %.3f bits\\n', res$capacity_bits))",
+  papers: [
+    {
+      title: "Information Transduction Capacity of Noisy Biochemical Signaling Networks",
+      authors: "Raymond Cheong, Alex Rhee, Chiaochun Joanne Wang, Ilya Nemenman, Andre Levchenko (2011)",
+      venue: "Science, 334(6054), 354-358",
+      link: "https://doi.org/10.1126/science.1204553",
+      desc: "Measured the information transduction capacity of TNF-alpha to NF-kappaB and ATF-2 signaling in single fibroblasts, discovering an ~1-bit bottleneck caused by upstream receptor signaling."
+    },
+    {
+      title: "Information Flow and Optimization in Transcriptional Regulation",
+      authors: "Gašper Tkačik, Curtis G. Callan Jr., William Bialek (2008)",
+      venue: "Proceedings of the National Academy of Sciences (PNAS), 105(34), 12265-12270",
+      link: "https://doi.org/10.1073/pnas.0806077105",
+      desc: "Showed that the Bicoid/Hunchback transcriptional input-output system in the early Drosophila embryo achieves ~90% of the physical channel capacity limit permitted by molecular shot noise."
+    },
+    {
+      title: "Positional Information, in Bits",
+      authors: "Julien O. Dubuis, Gašper Tkačik, Eric F. Wieschaus, Thomas Gregor, William Bialek (2013)",
+      venue: "Proceedings of the National Academy of Sciences (PNAS), 110(41), 16301-16308",
+      link: "https://doi.org/10.1073/pnas.1315642110",
+      desc: "Made Lewis Wolpert's concept of embryonic positional information mathematically rigorous, proving that four Drosophila gap genes encode ~4.2 bits of positional identity."
+    }
+  ],
+  res: [
+    ["Package", "SLEMI: Statistical Learning Based Estimation of Mutual Information", "https://github.com/sysbiosig/SLEMI", "R package specifically designed to compute channel capacity from single-cell signaling data"],
+    ["Paper", "An Algorithm for Computing the Capacity of Arbitrary Discrete Memoryless Channels (Arimoto 1972)", "https://doi.org/10.1109/TIT.1972.1054753", "Original derivation of the iterative channel capacity optimization algorithm"],
+    ["Review", "Information Theory and Cell Signaling (Levchenko & Nemenman 2014)", "https://doi.org/10.1016/j.ceb.2014.01.003", "Comprehensive review of noise, bottlenecks, and dynamical coding in cellular networks"]
+  ],
+  quiz: [
+    ["If a single-cell signaling pathway has a channel capacity of C = 1.0 bit, what is the maximum number of ligand concentration levels a single cell can distinguish without error?", ["1 state", "2 states (2^1 = 2, e.g., ON vs OFF)", "10 states"], 1, "One bit of mutual information resolves 2^1 = 2 distinguishable input states."],
+    ["What did Dubuis et al. (2013) discover about the four gap genes in the early Drosophila embryo?", ["They only carry 0.5 bits of information total", "Together they carry ~4.2 bits of positional information, enough to specify a cell's anterior-posterior location with ~1% precision", "They operate completely deterministically without noise"], 1, "While individual gap genes carry ~2 bits (more than a simple 1-bit ON/OFF boundary), the four genes jointly provide ~4.2 bits, matching the ~1% spacing of neighboring nuclei."],
+    ["Why do cells often use dynamic pulsatile trajectories (e.g., NF-kappaB or ERK oscillations) rather than a single static concentration snapshot?", ["Because pulses require zero ATP", "Because multidimensional temporal trajectories bypass single-timepoint noise bottlenecks and transmit significantly more bits of information", "Because static proteins cannot enter the nucleus"], 1, "Encoding signals in vector trajectories (amplitude, frequency, duration) increases mutual information and mitigates extrinsic noise."]
+  ]
+},
+{
+  t: "Neural Coding, Spike Train Entropy & Efficient Representations",
+  time: "2 weeks",
+  goal: "Calculate information rates in neural spike trains, apply Horace Barlow's Efficient Coding Hypothesis, and formulate the Information Bottleneck.",
+  math: "<b>1. Spike Train Information Rate (Strong, Koberle, de Ruyter van Steveninck, Bialek 1998):</b><br>" +
+        "I(Spike Train; Stimulus) = &lim;<sub>T&rarr;&infin;</sub> (1 / T) [ S<sub>total</sub>(&Delta;&tau;, T) &minus; &langle; S<sub>noise</sub>(&Delta;&tau;, T | s(t)) &rangle; ] &nbsp;(bits/sec)<br><br>" +
+        "<b>2. Single-Spike Information (Brenner et al. 2000):</b><br>" +
+        "I<sub>1 spike</sub> = (1 / r&#772;T) &int;<sub>0</sub><sup>T</sup> r(t) log<sub>2</sub> [ r(t) / r&#772; ] dt &nbsp;(bits/spike), where r(t) is the time-varying firing rate and r&#772; is the mean rate.<br><br>" +
+        "<b>3. The Information Bottleneck Variational Principle (Tishby, Pereira, Bialek 1999):</b><br>" +
+        "min<sub>P(T | X)</sub> &Lscr; = I(X; T) &minus; &beta; I(T; Y)<br>" +
+        "Compresses high-dimensional sensory input X into internal representation T while preserving relevant behavioral information about target Y.",
+  learn: [
+    "Horace Barlow (1961) formulated the Efficient Coding (Redundancy Reduction) Hypothesis: sensory relays transform raw environmental inputs to minimize statistical redundancy and maximize mutual information subject to metabolic and firing-rate constraints.",
+    "Simon Laughlin (1981) tested efficient coding quantitatively in the blowfly large monopolar cell (LMC): to maximize entropy H(R) for a bounded response range [0, R<sub>max</sub>], the neuron's input-output contrast-response curve must match the cumulative probability distribution (CDF) of natural visual contrasts—a prediction confirmed almost exactly by intracellular recordings.",
+    "Discretizing continuous spike trains into time bins &Delta;&tau; of window length T creates words W: Total entropy S<sub>total</sub> measures the repertoire of spike patterns across natural stimuli, whereas noise entropy S<sub>noise</sub> (measured by repeating the exact same stimulus trace many times) quantifies variability due to intrinsic neural noise.",
+    "Bialek et al. (1991, 1998) showed that the blowfly motion-sensitive neuron H1 transmits up to ~80–90 bits/sec (~1.5–2.5 bits/spike), achieving ~50% coding efficiency relative to the physical limit set by the total spike train entropy."
+  ],
+  example: {
+    title: "Worked Biological Example: Calculating Information per Spike from a Peri-Stimulus Time Histogram (PSTH)",
+    body: "A retinal ganglion cell responds to a repeating 4-second natural movie clip. Across 4 equal 1-second intervals, its trial-averaged firing rate r(t) is <code>[5, 5, 10, 60] Hz</code>, giving a mean firing rate <code>r&#772; = (5 + 5 + 10 + 60) / 4 = 20 Hz</code>:<br>" +
+          "Using the Brenner formula <code>I<sub>spike</sub> = &frac14; &sum;<sub>t</sub> (r(t) / r&#772;) log<sub>2</sub>(r(t) / r&#772;)</code>:<br>" +
+          "&bull; Intervals 1 &amp; 2 (r = 5 Hz): <code>(5/20) log<sub>2</sub>(5/20) = 0.25 &times; (&minus;2) = &minus;0.500 bits each</code><br>" +
+          "&bull; Interval 3 (r = 10 Hz): <code>(10/20) log<sub>2</sub>(10/20) = 0.50 &times; (&minus;1) = &minus;0.500 bits</code><br>" +
+          "&bull; Interval 4 (r = 60 Hz): <code>(60/20) log<sub>2</sub>(60/20) = 3.00 &times; 1.585 = +4.755 bits</code><br>" +
+          "<code>I<sub>spike</sub> = 0.25 &times; (&minus;0.500 &minus; 0.500 &minus; 0.500 + 4.755) = 0.814 bits/spike</code>.<br>" +
+          "Multiplying by the mean firing rate (20 spikes/sec) yields an information rate of <code>16.28 bits/sec</code>."
+  },
+  app: "Decoding brain-machine interfaces (motor cortex spike trains), analyzing calcium imaging and Neuropixels recordings, and designing retinal/cochlear neural prosthetics.",
+  py: "# Computing Information in Bits/Spike and Bits/Second (Brenner et al. 2000) in Python\nimport numpy as np\n\ndef spike_information(r_t, dt):\n    # r_t: array of PSTH firing rates (Hz) in time bins of width dt (sec)\n    r_mean = np.mean(r_t)\n    valid = r_t > 0\n    ratio = r_t[valid] / r_mean\n    bits_per_spike = np.sum((r_t[valid] / r_mean) * np.log2(ratio)) / len(r_t)\n    bits_per_sec = bits_per_spike * r_mean\n    return bits_per_spike, bits_per_sec\n\npsth_hz = np.array([5.0, 5.0, 10.0, 60.0])\nb_spike, b_sec = spike_information(psth_hz, dt=1.0)\nprint(f'Information: {b_spike:.3f} bits/spike | Rate: {b_sec:.2f} bits/sec')",
+  r: "# Laughlin (1981) Optimal Histogram Equalization Response Function in R\nset.seed(42)\n# Natural stimulus contrast distribution (Laplacian / heavy-tailed)\ncontrasts <- rnorm(10000, mean = 0, sd = 0.3)\n\n# Optimal neural response function g(s) is the empirical CDF of stimulus\necDF_func <- ecdf(contrasts)\nneural_response <- ecDF_func(contrasts) # Uniformly distributed on [0, 1]!\n\n# Verify output entropy is maximized across 10 response bins\nhist_counts <- hist(neural_response, breaks = seq(0, 1, by = 0.1), plot = FALSE)$counts\np <- hist_counts / sum(hist_counts)\ncat(sprintf('Output Entropy: %.3f bits (Max theoretical: %.3f bits)\\n', -sum(p*log2(p)), log2(10)))",
+  papers: [
+    {
+      title: "Possible Principles Underlying the Transformations of Sensory Messages",
+      authors: "Horace B. Barlow (1961)",
+      venue: "In Sensory Communication (ed. W. A. Rosenblith), MIT Press, pp. 217-234",
+      link: "https://doi.org/10.7551/mitpress/9780262518420.003.0013",
+      desc: "Formulated the Efficient Coding Hypothesis, proposing that early sensory pathways recode natural inputs to compress redundancy and maximize metabolic coding efficiency."
+    },
+    {
+      title: "A Simple Coding Procedure Enhances a Neuron's Information Capacity",
+      authors: "Simon B. Laughlin (1981)",
+      venue: "Zeitschrift für Naturforschung C, 36(9-10), 910-912",
+      link: "https://doi.org/10.1515/znc-1981-9-1040",
+      desc: "Classic experimental demonstration that the contrast-response curve of insect visual interneurons matches the cumulative distribution of natural contrasts, maximizing response entropy."
+    },
+    {
+      title: "Reading a Neural Code",
+      authors: "William Bialek, Fred Rieke, Rob R. de Ruyter van Steveninck, David Warland (1991)",
+      venue: "Science, 252(5014), 1854-1857",
+      link: "https://doi.org/10.1126/science.2063199",
+      desc: "Showed how continuous velocity stimuli can be reconstructed in real time from individual blowfly H1 spike trains, establishing quantitative bounds on bits per spike."
+    },
+    {
+      title: "Entropy and Information in Neural Spike Trains",
+      authors: "Scott P. Strong, Roland Koberle, Rob R. de Ruyter van Steveninck, William Bialek (1998)",
+      venue: "Physical Review Letters, 80(1), 197-200",
+      link: "https://doi.org/10.1103/PhysRevLett.80.197",
+      desc: "Introduced the direct method for estimating total spike train entropy and conditional noise entropy without assuming a specific stimulus encoding model."
+    },
+    {
+      title: "The Information Bottleneck Method",
+      authors: "Naftali Tishby, Fernando C. Pereira, William Bialek (1999)",
+      venue: "Proceedings of the 37th Annual Allerton Conference on Communication, Control and Computing, pp. 368-377",
+      link: "https://arxiv.org/abs/physics/0004057",
+      desc: "Formulated the variational trade-off between compressing an input signal I(X; T) and preserving predictive information about a target variable I(T; Y)."
+    }
+  ],
+  res: [
+    ["Book", "Spikes: Exploring the Neural Code (Rieke, Warland, de Ruyter van Steveninck, Bialek)", "https://mitpress.mit.edu/9780262681087/spikes/", "Definitive text on information theory in sensory and systems neuroscience"],
+    ["Book", "Theoretical Neuroscience (Dayan & Abbott)", "https://mitpress.mit.edu/9780262541855/theoretical-neuroscience/", "Chapter 4 provides a rigorous mathematical overview of neural information theory"],
+    ["Paper", "Synergy in a Neural Code (Brenner, Strong, Koberle, Bialek, de Ruyter van Steveninck 2000)", "https://doi.org/10.1162/089976600300015667", "Derives model-independent formulas for information carried by single spikes and compound spike patterns"]
+  ],
+  quiz: [
+    ["According to Simon Laughlin's (1981) efficient coding derivation, what shape should a neuron's static input-output curve f(s) take to maximize output entropy for a bounded firing rate?", ["A flat horizontal line", "The Cumulative Distribution Function (CDF) of the natural stimulus probability distribution P(s)", "A step function at zero"], 1, "Setting the response equal to the stimulus CDF performs histogram equalization, yielding a uniform output distribution and maximizing output entropy."],
+    ["In the Strong et al. (1998) direct method, how is the mutual information between a spike train and a dynamic stimulus calculated?", ["By counting the total number of spikes", "By subtracting the conditional noise entropy <S_noise(W | s)> (across repeated identical stimulus trials) from the total spike word entropy S_total(W)", "By multiplying spike amplitude by membrane capacitance"], 1, "I(W; S) = S(W) - S(W | S), where S(W) is the variability across all stimuli and S(W | S) is the trial-to-trial variability to a repeated stimulus."],
+    ["What does the Information Bottleneck objective min [I(X; T) - beta * I(T; Y)] optimize?", ["It memorizes every detail of X", "It finds the most compressed internal representation T of input X that retains maximal predictive information about relevant variable Y", "It maximizes noise in T"], 1, "Minimizing I(X; T) compresses irrelevant input fluctuations while maximizing I(T; Y) preserves task-relevant information."]
+  ]
+},
+{
+  t: "Evolutionary Information, Maxwell's Demon & Thermodynamics of Life",
+  time: "1 to 2 weeks",
+  goal: "Quantify genomic physical complexity, connect Darwinian natural selection to relative entropy accumulation, and apply Landauer's Principle to biomolecular copying.",
+  math: "<b>1. Adami Physical Complexity of a Genome of Length L in Environment E:</b><br>" +
+        "C = H<sub>max</sub> &minus; H(G | E) = 2L &minus; &sum;<sub>i=1</sub><sup>L</sup> H(i | E) &nbsp;(bits, neglecting epistasis)<br><br>" +
+        "<b>2. Evolutionary Information Gain via Natural Selection (Kullback-Leibler Fitness Update):</b><br>" +
+        "P<sub>t+1</sub>(x) = P<sub>t</sub>(x) [ w(x) / w&#772; ] &nbsp;&rArr;&nbsp; D<sub>KL</sub>(P<sub>t+1</sub> || P<sub>t</sub>) = &sum;<sub>x</sub> P<sub>t+1</sub>(x) log<sub>2</sub> [ w(x) / w&#772; ]<br><br>" +
+        "<b>3. Landauer's Thermodynamic Bound per Erased / Reset Bit:</b><br>" +
+        "&Delta;Q &ge; k<sub>B</sub> T ln(2) &approx; 0.693 k<sub>B</sub> T &nbsp;(&approx; 2.87 &times; 10<sup>&minus;21</sup> J at T = 300 K)<br><br>" +
+        "<b>4. Non-Equilibrium Free Energy &amp; KL Divergence:</b><br>" +
+        "F(P) &minus; F<sub>eq</sub>(P<sub>eq</sub>) = k<sub>B</sub> T ln(2) &middot; D<sub>KL</sub>(P || P<sub>eq</sub>)",
+  learn: [
+    "Why random mutations do not increase biological complexity: A completely random sequence has maximum internal Shannon entropy H(G), but zero mutual information I(G; E) about any environment.",
+    "Christoph Adami, Charles Ofria, and Travis Collier (2000) resolved this paradox by defining 'physical complexity' not as sequence randomness H(G), but as the mutual information I(G; E) = H<sub>max</sub> &minus; H(G | E) that a population of genomes stores about its environment E.",
+    "Natural selection acts as a physical 'Maxwell's Demon': by selectively discarding low-fitness variants, a population reduces conditional genomic entropy H(G | E) at functional loci and accumulates environmental information I(G; E) monotonically in a fixed niche.",
+    "Thermodynamics of cellular information processing (Landauer 1961; Hopfield 1974; Bennett 1982; England 2013): Resetting a molecular memory state or running kinetic proofreading during DNA replication, transcription, and translation requires free energy dissipation (ATP/GTP hydrolysis) bounded below by k<sub>B</sub>T ln(2) per bit of error reduction."
+  ],
+  example: {
+    title: "Worked Biological Example: Energetic Efficiency of Ribosomal Translation vs. Landauer's Bound",
+    body: "During translation elongation, the ribosome selects the correct aminoacyl-tRNA out of 20 possibilities (~4.32 bits of information per peptide bond) with an error rate of ~10<sup>&minus;4</sup>.<br>" +
+          "&bull; <b>Landauer minimum thermodynamic cost</b> for 4.32 bits:<br>" +
+          "<code>W<sub>min</sub> = 4.32 &times; ln(2) k<sub>B</sub>T &approx; 3.0 k<sub>B</sub>T</code>.<br>" +
+          "&bull; <b>Actual cellular energetic expenditure</b>: Incorporating one amino acid hydrolyzes 4 high-energy phosphate bonds (2 ATP equivalents during tRNA charging + 2 GTP equivalents via EF-Tu and EF-G), dissipating roughly:<br>" +
+          "<code>&Delta;G<sub>actual</sub> &approx; 4 &times; 20 k<sub>B</sub>T = 80 k<sub>B</sub>T</code>.<br>" +
+          "Why does the cell spend ~27-fold more energy than the reversible Landauer limit? Because living cells cannot wait for infinitely slow quasi-static equilibrium—they pay extra free energy to drive kinetic proofreading (Hopfield 1974) at high speed (~15–20 amino acids/sec) and low error."
+  },
+  app: "Tracking adaptive evolution in viral pandemics, measuring selective constraint across comparative vertebrate alignments (PhyloP/PhastCons), and analyzing metabolic costs of cellular sensing.",
+  py: "# Simulating Adami Physical Complexity C = I(Genome; Environment) in Python\nimport numpy as np\n\n# Population of 1000 evolving binary genomes of length L = 10\n# Sites 0..4 are under strong purifying selection; sites 5..9 are neutral\nnp.random.seed(42)\np_mutant = np.array([0.01, 0.02, 0.01, 0.01, 0.03, 0.50, 0.48, 0.51, 0.49, 0.50])\n\n# Per-site binary entropy H(i | E)\nH_site = -(p_mutant * np.log2(p_mutant) + (1 - p_mutant) * np.log2(1 - p_mutant))\nC_site = 1.0 - H_site # Max binary entropy is 1 bit per site\n\nprint('Per-site Physical Complexity (bits):', np.round(C_site, 3))\nprint(f'Total Genomic Information I(G; E): {np.sum(C_site):.2f} / 10.00 bits')",
+  r: "# Calculating Kullback-Leibler Information Gain in One Generation of Selection in R\n# Prior genotype frequencies before selection\np_prior <- c(AA = 0.25, Aa = 0.50, aa = 0.25)\n# Relative Darwinian fitnesses w\nw <- c(AA = 1.40, Aa = 1.00, aa = 0.60)\n\nw_bar <- sum(p_prior * w)\np_post <- (p_prior * w) / w_bar\n\n# Information gained by natural selection in bits: D_KL(p_post || p_prior)\ninfo_gain_bits <- sum(p_post * log2(p_post / p_prior))\ncat(sprintf('Information accumulated in 1 generation: %.4f bits\\n', info_gain_bits))",
+  papers: [
+    {
+      title: "Evolution of Biological Complexity",
+      authors: "Christoph Adami, Charles Ofria, Travis C. Collier (2000)",
+      venue: "Proceedings of the National Academy of Sciences (PNAS), 97(9), 4463-4468",
+      link: "https://doi.org/10.1073/pnas.97.9.4463",
+      desc: "Demonstrated that genomic complexity equals the mutual information I(G; E) stored about the environment, proving that natural selection acts as a Maxwell's Demon that increases physical complexity."
+    },
+    {
+      title: "Irreversibility and Heat Generation in the Computing Process",
+      authors: "Rolf Landauer (1961)",
+      venue: "IBM Journal of Research and Development, 5(3), 183-191",
+      link: "https://doi.org/10.1147/rd.53.0183",
+      desc: "Established the physical equivalence between information and thermodynamics, proving that erasing 1 bit of information requires dissipating at least k_B T ln(2) of heat."
+    },
+    {
+      title: "Kinetic Proofreading: A New Mechanism for Reducing Errors in Biosynthetic Processes Requiring High Specificity",
+      authors: "John J. Hopfield (1974)",
+      venue: "Proceedings of the National Academy of Sciences (PNAS), 71(10), 4135-4139",
+      link: "https://doi.org/10.1073/pnas.71.10.4135",
+      desc: "Explained how cells spend non-equilibrium chemical energy (ATP/GTP) to drive irreversible intermediate steps, reducing error rates in DNA replication and protein synthesis far below equilibrium Boltzmann limits."
+    },
+    {
+      title: "Thermodynamics of Evolution and the Origin of Life",
+      authors: "Jeremy L. England (2013)",
+      venue: "The Journal of Chemical Physics, 139(12), 121923",
+      link: "https://doi.org/10.1063/1.4818538",
+      desc: "Derived exact statistical-mechanical lower bounds relating bacterial self-replication rates, durability, and minimum entropy production."
+    }
+  ],
+  res: [
+    ["Paper", "The Thermodynamics of Computation—A Review (Charles H. Bennett 1982)", "https://doi.org/10.1007/BF02084158", "Classic review linking reversible computing, Maxwell's Demon, and RNA polymerase/ribosome energetics"],
+    ["Review", "Thermodynamics of Information Processing in Small Systems (Parrondo, Horowitz, Sagawa 2015)", "https://doi.org/10.1038/nphys3230", "Nature Physics review of Maxwell demons, Szilard engines, and cellular sensory adaptation"],
+    ["Book", "Information Theory, Evolution, and the Origin of Life (Hubert P. Yockey)", "https://doi.org/10.1017/CBO9780511546433", "Explores genetic codes, error-correcting codes, and sequence entropy in molecular evolution"]
+  ],
+  quiz: [
+    ["In Christoph Adami's framework, why does a completely random DNA sequence have ZERO physical complexity despite having maximal Shannon entropy?", ["Because random sequences cannot be sequenced", "Because physical complexity measures the Mutual Information I(Genome; Environment) = H_max - H(G | E); for a random sequence H(G | E) = H_max, so it stores 0 bits about any environment", "Because A and T cancel out"], 1, "Unconstrained randomness carries no information about the environment; functional conservation reduces H(G | E) and increases stored information I(G; E)."],
+    ["According to Landauer's Principle, what is the minimum thermodynamic work required to erase or reset 1 bit of molecular memory at temperature T?", ["0 Joules", "k_B * T * ln(2) (\u2248 0.693 k_B T)", "100 k_B T"], 1, "Compressing two logical states into one reduces phase-space volume by half, requiring at least k_B T ln(2) of heat dissipation into the surrounding bath."],
+    ["Why do ribosomes and DNA polymerases dissipate much more ATP/GTP than the minimum Landauer bound?", ["Because enzymes are poorly evolved", "To power non-equilibrium kinetic proofreading (Hopfield mechanism), achieving both high polymerization speed and low error rates far beyond equilibrium thermodynamic limits", "To heat up the cytoplasm"], 1, "Equilibrium discrimination is limited by exp(-DeltaG / k_B T); driving irreversible proofreading cycles with NTP hydrolysis squares the specificity and enables fast catalysis."]
+  ]
+},
+{
+  t: "Temporal Causality, Transfer Entropy & Single-Cell Information Landscapes",
+  time: "2 weeks",
+  goal: "Measure directed time-series information flow using Transfer Entropy, evaluate Jensen-Shannon Divergence across single-cell distributions, and quantify cell fate transitions.",
+  math: "<b>1. Schreiber Transfer Entropy (Directed Information Flow X &rarr; Y):</b><br>" +
+        "T<sub>X&rarr;Y</sub> = I(Y<sub>t+1</sub>; X<sub>t</sub><sup>(k)</sup> | Y<sub>t</sub><sup>(l)</sup>) = H(Y<sub>t+1</sub> | Y<sub>t</sub><sup>(l)</sup>) &minus; H(Y<sub>t+1</sub> | Y<sub>t</sub><sup>(l)</sup>, X<sub>t</sub><sup>(k)</sup>)<br><br>" +
+        "<b>2. Jensen-Shannon Divergence (Symmetric, Bounded Metric):</b><br>" +
+        "JSD(P || Q) = &frac12; D<sub>KL</sub>(P || M) + &frac12; D<sub>KL</sub>(Q || M), &nbsp;where M = &frac12;(P + Q)<br>" +
+        "Bounds: 0 &le; JSD(P || Q) &le; 1 bit, and &radic;JSD(P || Q) is a true mathematical metric obeying the triangle inequality.<br><br>" +
+        "<b>3. Transcriptomic Differentiation Potency (Single-Cell Signaling Entropy SR):</b><br>" +
+        "SR(cell) = &minus;&sum;<sub>i</sub> &pi;<sub>i</sub> &sum;<sub>j&isin;N(i)</sub> p<sub>ij</sub> log p<sub>ij</sub> &nbsp;(pluripotent stem cells exhibit high SR; differentiated cells exhibit low SR)",
+  learn: [
+    "Standard Mutual Information I(X; Y) is strictly symmetric: I(X; Y) = I(Y; X), so it cannot determine whether gene X regulates gene Y or vice versa.",
+    "Thomas Schreiber (2000) introduced Transfer Entropy T<sub>X&rarr;Y</sub> as a non-parametric, model-free generalization of Granger causality: it measures the reduction in uncertainty about the future state of Y<sub>t+1</sub> provided by the past of X<sub>t</sub>, conditioned on Y's own past history Y<sub>t</sub>.",
+    "For bivariate Gaussian processes, Barnett, Barrett, and Seth (2009) proved that Transfer Entropy is mathematically equivalent to Granger causality: T<sub>X&rarr;Y</sub> = &frac12; log<sub>2</sub>( Var(&epsilon;<sub>restricted</sub>) / Var(&epsilon;<sub>unrestricted</sub>) ).",
+    "In single-cell genomics and lineage tracing, the Jensen-Shannon Divergence (JSD) is widely used to compare probability distributions of gene expression or chromatin accessibility across cell clusters because—unlike D<sub>KL</sub>—it is symmetric, always finite (even when one distribution has zero counts where the other is non-zero), and bounded between 0 and 1 bit.",
+    "During stem cell differentiation (e.g., hematopoietic or embryonic stem cells), pluripotency corresponds to a high-entropy promiscuous transcriptional state (MacArthur & Lemischka 2013; Teschendorff & Enver 2017), whereas lineage commitment progressively restricts transcriptomic entropy."
+  ],
+  example: {
+    title: "Worked Biological Example: Comparing Two Single-Cell Transcriptomic States with Jensen-Shannon Divergence",
+    body: "Suppose we profile expression proportions across 3 marker states (Pluripotent, Mesoderm, Ectoderm) for two cell populations:<br>" +
+          "&bull; Population P (Control Organoid): <code>P = [0.80, 0.20, 0.00]</code><br>" +
+          "&bull; Population Q (Treated Organoid): <code>Q = [0.20, 0.60, 0.20]</code><br><br>" +
+          "Notice that <code>D<sub>KL</sub>(Q || P)</code> blows up to <b>+&infin;</b> because P(Ectoderm) = 0 while Q(Ectoderm) = 0.20! Instead, we compute the midpoint distribution <code>M = &frac12;(P + Q) = [0.50, 0.40, 0.10]</code> and use Jensen-Shannon Divergence:<br>" +
+          "<code>H(M) = &minus;(0.5 log<sub>2</sub> 0.5 + 0.4 log<sub>2</sub> 0.4 + 0.1 log<sub>2</sub> 0.1) = 1.361 bits</code><br>" +
+          "<code>H(P) = 0.722 bits</code>; &nbsp;<code>H(Q) = 1.371 bits</code><br>" +
+          "<code>JSD(P || Q) = H(M) &minus; &frac12;[H(P) + H(Q)] = 1.361 &minus; &frac12;(2.093) = 0.315 bits</code>.<br>" +
+          "Taking the square root gives the Jensen-Shannon Distance <code>&radic;0.315 = 0.561</code>, a well-behaved metric for clustering single-cell trajectories."
+  },
+  app: "Inferring directed causal networks from live-cell imaging or pseudotime scRNA-seq trajectories, quantifying stem cell potency (SCENT / CytoTRACE), and mapping effective connectivity in multi-electrode neural recordings.",
+  py: "# Computing Jensen-Shannon Divergence and Gaussian Transfer Entropy in Python\nimport numpy as np\nfrom scipy.spatial.distance import jensenshannon\n\n# 1. Jensen-Shannon Divergence (in bits) between two single-cell state distributions\np = np.array([0.80, 0.20, 0.00])\nq = np.array([0.20, 0.60, 0.20])\njs_dist = jensenshannon(p, q, base=2)\njs_div_bits = js_dist ** 2\nprint(f'Jensen-Shannon Divergence: {js_div_bits:.3f} bits (Distance: {js_dist:.3f})')\n\n# 2. Time-series Transfer Entropy X -> Y vs Y -> X\nnp.random.seed(42)\nT = 1000\nx = np.zeros(T); y = np.zeros(T)\nfor t in range(1, T):\n    x[t] = 0.5 * x[t-1] + np.random.normal(0, 1)\n    y[t] = 0.5 * y[t-1] + 0.7 * x[t-1] + np.random.normal(0, 1) # X drives Y!\n\n# Variance of residuals predicting Y_t from Y_{t-1} alone vs (Y_{t-1}, X_{t-1})\nvar_y_restricted = np.var(y[1:] - np.polyval(np.polyfit(y[:-1], y[1:], 1), y[:-1]))\nX_design = np.column_stack([y[:-1], x[:-1], np.ones(T-1)])\nvar_y_unrestricted = np.var(y[1:] - X_design @ np.linalg.lstsq(X_design, y[1:], rcond=None)[0])\nte_x_to_y = 0.5 * np.log2(var_y_restricted / var_y_unrestricted)\nprint(f'Estimated Transfer Entropy T(X -> Y): {te_x_to_y:.3f} bits')",
+  r: "# Jensen-Shannon Divergence & Single-Cell Transcriptomic Entropy in R\njs_divergence_bits <- function(p, q) {\n  m <- 0.5 * (p + q)\n  h <- function(v) { v <- v[v > 0]; -sum(v * log2(v)) }\n  h(m) - 0.5 * (h(p) + h(q))\n}\n\np_stem <- c(0.80, 0.20, 0.00)\nq_diff <- c(0.20, 0.60, 0.20)\ncat(sprintf('JSD: %.3f bits\\n', js_divergence_bits(p_stem, q_diff)))",
+  papers: [
+    {
+      title: "Measuring Information Transfer",
+      authors: "Thomas Schreiber (2000)",
+      venue: "Physical Review Letters, 85(2), 461-464",
+      link: "https://doi.org/10.1103/PhysRevLett.85.461",
+      desc: "Introduced Transfer Entropy as an asymmetric, conditioning-based information measure that quantifies directed causal information transport between coupled dynamical systems."
+    },
+    {
+      title: "Granger Causality and Transfer Entropy Are Equivalent for Gaussian Variables",
+      authors: "Lionel Barnett, Adam B. Barrett, Anil K. Seth (2009)",
+      venue: "Physical Review Letters, 103(23), 238701",
+      link: "https://doi.org/10.1103/PhysRevLett.103.238701",
+      desc: "Proved the exact analytical bridge between linear autoregressive Granger causality and non-parametric information-theoretic transfer entropy."
+    },
+    {
+      title: "Single-Cell Entropy for Accurate Estimation of Differentiation Potency from a Cell's Transcriptome",
+      authors: "Andrew E. Teschendorff, Tariq Enver (2017)",
+      venue: "Nature Communications, 8, 15599",
+      link: "https://doi.org/10.1038/ncomms15599",
+      desc: "Demonstrated that signaling entropy computed integrating scRNA-seq profiles with protein-protein interaction networks robustly quantifies stem cell pluripotency and lineage plasticity."
+    }
+  ],
+  res: [
+    ["Toolkit", "JIDT: Java Information Dynamics Toolkit (Joseph Lizier)", "https://github.com/jlizier/jidt", "Comprehensive library (with Python/R/MATLAB wrappers) for Transfer Entropy and active information storage"],
+    ["Package", "IDTxl: Information Dynamics Toolkit xl (Python)", "https://github.com/pwollstadt/IDTxl", "Multivariate transfer entropy network inference for neuroscience and systems biology time-series"],
+    ["Paper", "Divergence Measures Based on the Shannon Entropy (Jianhua Lin 1991)", "https://doi.org/10.1109/18.61115", "Formalized the Jensen-Shannon Divergence and its mathematical bounds"]
+  ],
+  quiz: [
+    ["Why can't ordinary Mutual Information I(X_t; Y_{t+1}) distinguish whether X drives Y or both X and Y are driven by Y's own history?", ["Because Mutual Information is always negative", "Because time-delayed MI does not condition out the past history of the target Y_t, so shared autocorrelation creates spurious lagged mutual information", "Because MI only works on DNA"], 1, "Transfer Entropy explicitly conditions on the target's own past: I(Y_{t+1}; X_t | Y_t), isolating only the new predictive information originating from X."],
+    ["What major advantage does Jensen-Shannon Divergence (JSD) have over Kullback-Leibler Divergence D_KL(P || Q) when comparing sparse single-cell RNA-seq distributions?", ["JSD is asymmetric and unbounded", "JSD is symmetric, bounded between 0 and 1 bit, and remains finite even when P(x) > 0 and Q(x) = 0", "JSD does not use logarithms"], 1, "Because JSD compares both P and Q against their average M = 0.5*(P + Q), it never divides by zero and satisfies symmetry."],
+    ["How does transcriptomic entropy typically change as an embryonic stem cell differentiates into a terminally differentiated cell?", ["It increases to infinity", "It decreases as promiscuous multilineage gene expression becomes restricted to a specialized cell-type program", "It stays identically constant"], 1, "Pluripotent stem cells maintain broad, high-entropy transcriptional accessibility across lineages, whereas terminal differentiation restricts expression to lineage-specific modules."]
+  ]
+}
+];
+
+var KEY = "info-theory-bio-done", done = {}, cur = 0, filt = "All";
+try { done = JSON.parse(localStorage.getItem(KEY) || "{}"); } catch(e){}
+
+function g(id){ return document.getElementById(id); }
+function save(){ try{ localStorage.setItem(KEY, JSON.stringify(done)); }catch(e){} }
+function esc(s){ return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;"); }
+
+function prog(){
+  var n = Object.keys(done).filter(function(k){ return done[k]; }).length;
+  g("pb").style.width = (100 * n / M.length) + "%";
+  g("pt").textContent = n + " of " + M.length + " modules completed";
+}
+
+function nav(){
+  var h = "";
+  M.forEach(function(m, i){
+    h += '<button data-i="' + i + '"' + (i === cur ? ' aria-current="true"' : "") + (done[i] ? ' class="done"' : "") + '>' + (i + 1) + '. ' + esc(m.t) + '</button>';
+  });
+  g("nav").innerHTML = h;
+  g("nav").querySelectorAll("button").forEach(function(b){
+    b.onclick = function(){
+      cur = +b.dataset.i;
+      filt = "All";
+      nav();
+      render();
+      window.scrollTo(0,0);
+    };
+  });
+}
+
+function render(){
+  var m = M[cur];
+  var h = "";
+
+  // Module Header, Mathematical Formulations & Key Principles
+  h += '<div class="card">';
+  h += '<h2>' + (cur + 1) + '. ' + esc(m.t) + '</h2>';
+  h += '<div class="meta">Suggested Pace: ' + esc(m.time) + '</div>';
+  h += '<p class="goal">' + esc(m.goal) + '</p>';
+  h += '<h3>Core Mathematical Formulations</h3>';
+  h += '<div class="formula-box">' + m.math + '</div>';
+  h += '<h3>Key Biological &amp; Theoretical Principles</h3>';
+  h += '<ul>' + m.learn.map(function(x){ return '<li>' + x + '</li>'; }).join("") + '</ul>';
+  h += '</div>';
+
+  // Practical Worked Biological Example
+  h += '<div class="card">';
+  h += '<h3>Step-by-Step Practical Example</h3>';
+  h += '<div class="example-box">';
+  h += '<div class="example-title">' + m.example.title + '</div>';
+  h += '<div>' + m.example.body + '</div>';
+  h += '</div>';
+  h += '<h3 style="margin-top:16px">Broader Biological Applications</h3>';
+  h += '<p style="margin:0">' + esc(m.app) + '</p>';
+  h += '</div>';
+
+  // Code Snippets
+  h += '<div class="card">';
+  h += '<h3>Computational Implementation (Python &amp; R)</h3>';
+  h += '<div class="lang">Python</div>';
+  h += '<pre><code>' + esc(m.py) + '</code></pre>';
+  h += '<div class="lang">R</div>';
+  h += '<pre><code>' + esc(m.r) + '</code></pre>';
+  h += '</div>';
+
+  // Landmark Papers
+  h += '<div class="card">';
+  h += '<h3>Landmark Papers in This Domain</h3>';
+  h += m.papers.map(function(p){
+    return '<div class="paper-item">' +
+           '<div class="paper-title"><a href="' + p.link + '" target="_blank" rel="noopener noreferrer">' + esc(p.title) + ' &nearr;</a></div>' +
+           '<div class="paper-authors">' + esc(p.authors) + ' &bull; <em>' + esc(p.venue) + '</em></div>' +
+           '<p class="paper-desc">' + esc(p.desc) + '</p>' +
+           '</div>';
+  }).join("");
+  h += '</div>';
+
+  // Further Resources
+  var ty = ["All"];
+  m.res.forEach(function(r){ if(ty.indexOf(r[0]) < 0) ty.push(r[0]); });
+  h += '<div class="card">';
+  h += '<h3>Books, Packages &amp; Reference Tools</h3>';
+  h += '<div class="filters">' + ty.map(function(t){
+    return '<button data-f="' + esc(t) + '" aria-pressed="' + (t === filt) + '">' + esc(t) + '</button>';
+  }).join("") + '</div>';
+  m.res.forEach(function(r){
+    if(filt === "All" || r[0] === filt){
+      h += '<div class="res"><span class="tag">' + esc(r[0]) + '</span><div><a href="' + r[2] + '" target="_blank" rel="noopener noreferrer">' + esc(r[1]) + '</a><br><span class="n">' + esc(r[3]) + '</span></div></div>';
+    }
+  });
+  h += '</div>';
+
+  // Self-Check Quiz
+  h += '<div class="card"><h3>Concept Mastery Check</h3>';
+  m.quiz.forEach(function(q, qi){
+    h += '<div class="q" data-q="' + qi + '"><p>' + (qi + 1) + '. ' + esc(q[0]) + '</p>' +
+         q[1].map(function(o, oi){
+           return '<button class="opt" data-o="' + oi + '">' + esc(o) + '</button>';
+         }).join("") +
+         '<div class="why"></div></div>';
+  });
+  h += '</div>';
+
+  // Navigation Footer
+  h += '<div class="row">' +
+       '<button class="btn primary" id="dn">' + (done[cur] ? "Mark as Incomplete" : "Mark Module Complete") + '</button>' +
+       '<span>' +
+       (cur > 0 ? '<button class="btn" id="pv">&larr; Previous Module</button> ' : "") +
+       (cur < M.length - 1 ? '<button class="btn" id="nx">Next Module &rarr;</button>' : "") +
+       '</span></div>';
+
+  var mn = g("mod");
+  mn.innerHTML = h;
+
+  mn.querySelectorAll("[data-f]").forEach(function(b){
+    b.onclick = function(){ filt = b.dataset.f; render(); };
+  });
+
+  mn.querySelectorAll(".q").forEach(function(qe){
+    var q = m.quiz[+qe.dataset.q];
+    qe.querySelectorAll(".opt").forEach(function(b){
+      b.onclick = function(){
+        var o = +b.dataset.o;
+        qe.querySelectorAll(".opt").forEach(function(x){ x.classList.remove("ok","bad"); });
+        b.classList.add(o === q[2] ? "ok" : "bad");
+        qe.querySelector(".why").innerHTML = (o === q[2] ? "<strong style='color:var(--ok)'>Correct:</strong> " : "<strong style='color:var(--bad)'>Incorrect:</strong> ") + esc(q[3]);
+      };
+    });
+  });
+
+  g("dn").onclick = function(){
+    done[cur] = !done[cur];
+    save();
+    nav();
+    prog();
+    render();
+  };
+  if(g("pv")) g("pv").onclick = function(){ cur--; filt="All"; nav(); render(); window.scrollTo(0,0); };
+  if(g("nx")) g("nx").onclick = function(){ cur++; filt="All"; nav(); render(); window.scrollTo(0,0); };
+}
+
+nav();
+render();
+prog();
+</script>
+</body>
+</html>
