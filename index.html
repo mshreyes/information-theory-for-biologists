@@ -89,7 +89,7 @@ button:focus-visible,a:focus-visible{outline:2px solid var(--accent);outline-off
 <body>
 <header>
 <h1>Information Theory for Biologists</h1>
-<p>A free, self-paced curriculum exploring how living systems encode, transmit, and process information across molecular, cellular, neural, and evolutionary scales. From transcription factor sequence logos and protein coevolution to single-cell gene regulatory networks and biophysical channel capacity, each module provides native HTML mathematical formulations, step-by-step worked biological examples, verified landmark papers, and Python/R implementations.</p>
+<p>A free, self-paced curriculum exploring how living systems encode, transmit, and process information across molecular, cellular, neural, and evolutionary scales. From transcription factor sequence logos and protein coevolution to single-cell gene regulatory networks and biophysical channel capacity, each module provides native HTML mathematical formulations, step-by-step worked biological examples, suggested readings, and Python/R implementations.</p>
 <div class="bar" aria-hidden="true"><i id="pb"></i></div>
 <div class="meta" id="pt"></div>
 </header>
@@ -690,9 +690,9 @@ function render(){
   h += '<pre><code>' + esc(m.r) + '</code></pre>';
   h += '</div>';
 
-  // Landmark Papers
+  // Papers
   h += '<div class="card">';
-  h += '<h3>Landmark Papers in This Domain</h3>';
+  h += '<h3>Suggested readings</h3>';
   h += m.papers.map(function(p){
     return '<div class="paper-item">' +
            '<div class="paper-title"><a href="' + p.link + '" target="_blank" rel="noopener noreferrer">' + esc(p.title) + ' &nearr;</a></div>' +
